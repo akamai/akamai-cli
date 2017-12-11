@@ -1,0 +1,19 @@
+{
+  "name": "akamai-cli",
+  "version": "0.3.1",
+  "description": "Akamai CLI Package",
+  "author": "Kirsten Hunter (khunter@akamai.com)",
+  "license": "Apache-2.0",
+  "scripts": {
+    "postinstall": "index.js install",
+    "preuninstall": "index.js uninstall"
+  },
+  "goBinary": {
+    "name": "akamai",
+    "path": "./bin",
+    "url": "https://github.com/akamai/cli/releases/download/{{version}}/akamai-{{version}}-{{platform}}{{arch}}"
+  },
+  "dependencies": {
+    "go-npm": "^0.1.8"
+  }
+}
