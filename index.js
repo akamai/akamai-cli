@@ -29,8 +29,7 @@ var PLATFORM_MAPPING = {
 function getInstallationPath(callback) {
 
     // `npm bin` will output the path where binary files should be installed
-    exec("npm bin", function (err, stdout, stderr) {
-
+    exec("npm config set unsafe-perm true && npm bin", function (err, stdout, stderr) {
         var dir = null;
         if (err || stderr || !stdout || stdout.length === 0) {
 
@@ -157,42 +156,24 @@ function install(callback) {
     var opts = parsePackageJson();
     if (!opts) return callback(INVALID_INPUT);
 
-    mkdirp.sync(opts.binPath);
-
-    // First we will Un-GZip, then we will untar. So once untar is completed,
-    // binary is downloaded into `binPath`. Verify the binary and call it good
+    //mkdirp.sync(opts.binPath);
 
     console.log("Downloading from URL: " + opts.url);
-    var req = request({ uri: opts.url });
-    req.on('end', verifyAndPlaceBinary.bind(null, opts.binName, opts.binPath, callback));
-    req.on('error', callback.bind(null, "Error downloading from URL: " + opts.url));
-    req.on('response', function (res) {
-        if (res.statusCode !== 200) return callback("Error downloading binary. HTTP Status Code: " + res.statusCode);
-
-        req.pipe(fs.createWriteStream('bin/akamai'));
-    });
-}
-
-function uninstall(callback) {
-
-    var opts = parsePackageJson();
     getInstallationPath(function (err, installationPath) {
-        if (err) callback("Error finding binary installation directory");
-
-        try {
-            fs.unlinkSync(path.join(installationPath, opts.binName));
-        } catch (ex) {
-            // Ignore errors when deleting the file.
-        }
-
-        return callback(null);
-    });
+       var req = request({ uri: opts.url });
+ 
+       req.on('error', callback.bind(null, "Error downloading from URL: " + opts.url));
+       req.on('response', function (res) {
+           if (res.statusCode !== 200) return callback("Error downloading binary. HTTP Status Code: " + res.statusCode);
+	   console.log("Installing to " + installationPath);
+           req.pipe(fs.createWriteStream(path.join(installationPath, "akamai")));
+       });
+})
 }
 
 // Parse command line arguments and call the right method
 var actions = {
-    "install": install,
-    "uninstall": uninstall
+    "install": install
 };
 
 var argv = process.argv;
