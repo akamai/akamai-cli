@@ -7,8 +7,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var request = require('request'),
     path = require('path'),
-    tar = require('tar'),
-    zlib = require('zlib'),
     mkdirp = require('mkdirp'),
     fs = require('fs'),
     exec = require('child_process').exec;
@@ -60,6 +58,8 @@ function verifyAndPlaceBinary(binName, binPath, callback) {
 
         // Move the binary file
 	console.log("Putting akamai in " + installationPath + " from " + binPath);
+	let fullPath = path.join(binPath, binName);
+        fs.chmodSync(fullPath,'755');
         fs.renameSync(path.join(binPath, binName), path.join(installationPath, binName));
 
         callback(null);
@@ -68,7 +68,7 @@ function verifyAndPlaceBinary(binName, binPath, callback) {
 
 function validateConfiguration(packageJson) {
 
-    if (!packageJson.version) {
+    if (!packageJson.cliVersion) {
         return "'version' property must be specified";
     }
 
@@ -121,7 +121,7 @@ function parsePackageJson() {
     var binName = packageJson.goBinary.name;
     var binPath = packageJson.goBinary.path;
     var url = packageJson.goBinary.url;
-    var version = packageJson.version;
+    var version = packageJson.cliVersion;
     if (version[0] === 'v') version = version.substr(1); // strip the 'v' if necessary v0.0.1 => 0.0.1
 
     // Binary name on Windows has .exe suffix
