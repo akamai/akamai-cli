@@ -27,9 +27,9 @@ var PLATFORM_MAPPING = {
 };
 
 function getInstallationPath(callback) {
-
+    var env = process.env;
     // `npm bin` will output the path where binary files should be installed
-    exec("npm config set unsafe-perm true && npm bin", function (err, stdout, stderr) {
+    exec("npm bin", function (err, stdout, stderr) {
         var dir = null;
         if (err || stderr || !stdout || stdout.length === 0) {
 
@@ -37,14 +37,12 @@ function getInstallationPath(callback) {
             // Environment variables set by NPM when it runs.
             // npm_config_prefix points to NPM's installation directory where `bin` folder is available
             // Ex: /Users/foo/.nvm/versions/node/v4.3.0
-            var env = process.env;
             if (env && env.npm_config_prefix) {
                 dir = path.join(env.npm_config_prefix, "bin");
-            }
+            } 
         } else {
             dir = stdout.trim();
         }
-
         callback(null, dir);
     });
 }
@@ -56,7 +54,7 @@ function verifyAndPlaceBinary(binName, binPath, callback) {
         if (err) return callback("Error getting binary installation path from `npm bin`");
 
         // Move the binary file
-	console.log("Putting akamai in " + installationPath + " from " + binPath);
+	console.log("Putting " + binName + " in " + installationPath + " from " + binPath);
 	let fullPath = path.join(binPath, binName);
         fs.chmodSync(fullPath,'755');
         fs.renameSync(path.join(binPath, binName), path.join(installationPath, binName));
@@ -133,6 +131,7 @@ function parsePackageJson() {
     url = url.replace(/{{platform}}/g, PLATFORM_MAPPING[process.platform]);
     url = url.replace(/{{version}}/g, version);
     url = url.replace(/{{bin_name}}/g, binName);
+    if (process.platform == "win32") url += ".exe";
 
     return {
         binName: binName,
@@ -156,18 +155,22 @@ function install(callback) {
     var opts = parsePackageJson();
     if (!opts) return callback(INVALID_INPUT);
 
-    //mkdirp.sync(opts.binPath);
 
     console.log("Downloading from URL: " + opts.url);
     getInstallationPath(function (err, installationPath) {
        var req = request({ uri: opts.url });
- 
+       mkdirp.sync(installationPath);
+	   let targetFile = path.join(installationPath, opts.binName);
+       
        req.on('error', callback.bind(null, "Error downloading from URL: " + opts.url));
        req.on('response', function (res) {
            if (res.statusCode !== 200) return callback("Error downloading binary. HTTP Status Code: " + res.statusCode);
 	   console.log("Installing to " + installationPath);
-           req.pipe(fs.createWriteStream(path.join(installationPath, "akamai")));
-       });
+          req.pipe(fs.createWriteStream(targetFile));
+       })
+       .on('end', function(res) {
+        fs.chmodSync(targetFile,'755');
+       })
 })
 }
 
