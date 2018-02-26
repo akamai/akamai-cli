@@ -1,7 +1,7 @@
 {
   "name": "akamai-cli",
-  "version": "0.0.57",
-  "cliVersion": "0.4.2",
+  "version": "0.0.59",
+  "cliVersion": "0.5.0",
   "description": "Akamai CLI Package",
   "author": "Kirsten Hunter (khunter@akamai.com)",
   "license": "Apache-2.0",
